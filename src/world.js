@@ -157,10 +157,10 @@ function world_addTransitionRoom(startX, endX, startY, endY, startZ, endZ, isSta
 
   // doors
   world_addWallXY(startX, endX, startY, endY, endZ-1);
-  world_addDoor((endX+startX)/2, startY+2, endZ, isStartRoom);
+  world_addDoor((endX+startX)/2, startY+2, endZ, isStartRoom, isStartRoom);
 
   world_addWallXY(startX, endX, startY, endY, startZ+1);
-  world_addDoor((endX+startX)/2, startY+2, startZ, !isStartRoom);  
+  world_addDoor((endX+startX)/2, startY+2, startZ, !isStartRoom, false);  
 }
 
 function world_addRoom(startX, endX, startY, endY, startZ, endZ) {
@@ -281,11 +281,11 @@ function world_addCeiling(startX, endX, y, startZ, endZ) {
 
 }
 
-function world_addDoor(x, y, z, isActive) {
+function world_addDoor(x, y, z, isActive, isStartDoor = false) {
   world_addDoorBorder(x, y-1, z+3, TEXTURES_RUST);
   world_addDoorBorder(x, y-1, z+2, TEXTURES_RUST);
   world_addDoorBorder(x, y-1, z-1, TEXTURES_LIGHT_BARS);
-  door_add(x, y, z, isActive);
+  door_add(x, y, z, isActive, isStartDoor);
   world_addDoorBorder(x, y-1, z+1, TEXTURES_LIGHT_BARS);
   world_addDoorBorder(x, y-1, z-2, TEXTURES_RUST);
   world_addDoorBorder(x, y-1, z-3, TEXTURES_RUST);
@@ -399,6 +399,16 @@ function world_moveObject(object, xChange, yChange, zChange) {
     if (z > zChangeAbs) {
       z = zChangeAbs;
     }
+    
+    // 只进不出：玩家进入关卡后，不能退回起始区域
+    if (object === player && playerEnteredLevel && startZone !== undefined) {
+      let testZ = object.z + z*zSign;
+      if (testZ < startZone) {
+        // 如果尝试退回起始区域，阻止移动
+        break;
+      }
+    }
+    
     let block = world_getBlock(newX, newY, object.z + z*zSign + 0.5*zSign);
     if (block) {
       // handle auto up step

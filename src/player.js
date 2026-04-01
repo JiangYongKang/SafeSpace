@@ -82,6 +82,14 @@ function player_update() {
   if (player_inZone(startZone)) {
     if (!playerEnteredLevel) {
       playerEnteredLevel = true;
+      
+      // 只进不出：玩家进入关卡后，在起始门添加不可见阻挡，防止退回
+      doors.forEach(function(door) {
+        if (door.isStartDoor && !door.hasBlocker) {
+          world_addBlocks(door.x - 10, door.x + 10, door.y - 10, door.y + 10, door.z, door.z, TEXTURES_INVISIBLE);
+          door.hasBlocker = true;
+        }
+      });
     }
   }
   if (player_inZone(endZone)) {
