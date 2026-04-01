@@ -399,12 +399,34 @@ function world_moveObject(object, xChange, yChange, zChange) {
     if (z > zChangeAbs) {
       z = zChangeAbs;
     }
-    let block = world_getBlock(newX, newY, object.z + z*zSign + 0.5*zSign);
-    if (block) {
-      // handle auto up step
-      let blockAboveStep = world_getBlock(newX, newY+1, object.z + z*zSign + 0.5*zSign);
-      if (!blockAboveStep) {
-        newY += 1;
+    let nextZ = object.z + z*zSign + 0.5*zSign;
+    let block = world_getBlock(newX, newY, nextZ);
+    
+    // 大门单向阻挡：进入关卡后，禁止退回起始区域
+    // 当玩家往 Z 轴负方向移动且已进入关卡时，在大门位置添加阻挡
+    let isDoorOneWayBlocked = false;
+    if (zSign === -1 && playerEnteredLevel) {
+      for (let i = 0; i < doors.length; i++) {
+        let door = doors[i];
+        if (door.isActive) {
+          let zDist = nextZ - door.z;
+          // 玩家从关卡内部靠近门时，添加碰撞阻挡（Z 轴容差范围）
+          if (zDist > -2 && zDist < 2) {
+            isDoorOneWayBlocked = true;
+            break;
+          }
+        }
+      }
+    }
+    
+    if (block || isDoorOneWayBlocked) {
+      // 大门虚拟阻挡不触发上台阶，避免视角异常
+      if (block) {
+        // handle auto up step
+        let blockAboveStep = world_getBlock(newX, newY+1, nextZ);
+        if (!blockAboveStep) {
+          newY += 1;
+        }
       }
 
       break;

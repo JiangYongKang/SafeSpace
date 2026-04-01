@@ -12,14 +12,23 @@ function door_add(x, y, z, isActive) {
 
 function door_update() {
   doors.forEach(function(door) {
-    // open doors if you are in range
-    if (player_nearDoor(door) && door.state === DOOR_STATE_CLOSED) {
+    // 玩家穿门后，大门永久锁定关闭（不再根据距离开关）
+    let doorLocked = door.isActive && playerEnteredLevel && player.z > door.z;
+
+    // open doors if you are in range (未穿门锁定时才生效)
+    if (!doorLocked && player_nearDoor(door) && door.state === DOOR_STATE_CLOSED) {
       if (door.isActive) {
         door.state = DOOR_STATE_OPENING;
         soundEffects_play(SOUND_EFFECTS_DOOR_OPEN);
       }
     }
-    else if (!player_nearDoor(door) && door.state === DOOR_STATE_OPEN) {
+    // 玩家真正穿门后立即关门（Z 轴方向超过门 3 个单位即触发）
+    else if (door.isActive && door.state === DOOR_STATE_OPEN && player.z - door.z > 3) {
+      door.state = DOOR_STATE_CLOSING;
+      soundEffects_play(SOUND_EFFECTS_DOOR_CLOSE);
+    }
+    // 穿门锁定后不再自动关门，避免已关闭的门又触发状态变化
+    else if (!doorLocked && !player_nearDoor(door) && door.state === DOOR_STATE_OPEN) {
       door.state = DOOR_STATE_CLOSING;
       soundEffects_play(SOUND_EFFECTS_DOOR_CLOSE);
     }
