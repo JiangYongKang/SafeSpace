@@ -399,10 +399,32 @@ function world_moveObject(object, xChange, yChange, zChange) {
     if (z > zChangeAbs) {
       z = zChangeAbs;
     }
-    let block = world_getBlock(newX, newY, object.z + z*zSign + 0.5*zSign);
+    let testZ = object.z + z*zSign + 0.5*zSign;
+    let block = world_getBlock(newX, newY, testZ);
+    
+    // 单向门阻挡：只进不出
+    // 激活的关卡大门本质是单向阀
+    // 玩家从起始区(z < door.z)往关卡区(z > door.z)可以正常通过
+    // 但一旦完全进入关卡侧，就无法再退回起始区
+    if (zSign < 0) {
+      for (let d = 0; d < doors.length; d++) {
+        let door = doors[d];
+        if (door.isActive) {
+          let xDist = Math.abs(newX - door.x);
+          let yDist = Math.abs(newY - door.y);
+          // 关键：玩家当前位置已经完全进入关卡侧（过门1个单位），
+          // 且尝试往回穿过门的边界线
+          if (xDist < 6 && yDist < 9 && object.z > door.z + 1 && testZ <= door.z + 1) {
+            block = { texture: TEXTURES_INVISIBLE };
+            break;
+          }
+        }
+      }
+    }
+    
     if (block) {
       // handle auto up step
-      let blockAboveStep = world_getBlock(newX, newY+1, object.z + z*zSign + 0.5*zSign);
+      let blockAboveStep = world_getBlock(newX, newY+1, testZ);
       if (!blockAboveStep) {
         newY += 1;
       }
