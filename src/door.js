@@ -1,12 +1,14 @@
 
-function door_add(x, y, z, isActive) {
+function door_add(x, y, z, isActive, isStartDoor = false) {
   doors.push({
     x: x,
     y: y,
     z: z,
     offset: 0, // used for opening and closing
     state: DOOR_STATE_CLOSED,
-    isActive: isActive
+    isActive: isActive,
+    isStartDoor: isStartDoor,
+    hasBlocker: false
   });
 }
 
